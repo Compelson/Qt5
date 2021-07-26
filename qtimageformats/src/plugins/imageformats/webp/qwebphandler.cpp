@@ -170,7 +170,8 @@ bool QWebpHandler::read(QImage *image)
             QByteArray iccProfile = QByteArray::fromRawData(reinterpret_cast<const char *>(metaDataIter.chunk.bytes),
                                                             metaDataIter.chunk.size);
             // Ensure the profile is 4-byte aligned.
-            if (reinterpret_cast<qintptr>(iccProfile.constData()) & 0x3)
+            // if (reinterpret_cast<qintptr>(iccProfile.constData()) & 0x3)
+            // detach always to prevent crash
                 iccProfile.detach();
             m_colorSpace = QColorSpace::fromIccProfile(iccProfile);
             // ### consider parsing EXIF and/or XMP metadata too.
