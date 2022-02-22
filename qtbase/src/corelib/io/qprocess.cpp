@@ -45,6 +45,7 @@
 #include <qscopedvaluerollback.h>
 #if defined(Q_OS_WIN)
 #include <qtimer.h>
+#include <private/qthread_p.h>
 #endif
 #if defined QPROCESS_DEBUG
 #include <qstring.h>
@@ -1992,7 +1993,7 @@ qint64 QProcess::writeData(const char *data, qint64 len)
     }
 
 #if defined(Q_OS_WIN)
-    if (!d->stdinWriteTrigger) {
+    if (!d->stdinWriteTrigger && d->threadData->hasEventDispatcher()) {
         d->stdinWriteTrigger = new QTimer;
         d->stdinWriteTrigger->setSingleShot(true);
         QObjectPrivate::connect(d->stdinWriteTrigger, &QTimer::timeout,
@@ -2002,8 +2003,12 @@ qint64 QProcess::writeData(const char *data, qint64 len)
 
     d->writeBuffer.append(data, len);
 #ifdef Q_OS_WIN
-    if (!d->stdinWriteTrigger->isActive())
-        d->stdinWriteTrigger->start();
+    if (d->threadData->hasEventDispatcher()) {
+        if (!d->stdinWriteTrigger->isActive())
+            d->stdinWriteTrigger->start();
+    } else {
+        d->_q_canWrite();
+    }
 #else
     if (d->stdinChannel.notifier)
         d->stdinChannel.notifier->setEnabled(true);
