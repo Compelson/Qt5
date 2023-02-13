@@ -138,9 +138,9 @@ class LABColorSpace {
                       clamp(lab.Z(), -128.0f, 128.0f)};
 
     return {
-        invf((v.X() + 16.0f) / 116.0f + (v.Y() * 0.002f)) * kIlluminantD50.X(),
-        invf((v.X() + 16.0f) / 116.0f) * kIlluminantD50.Y(),
-        invf((v.X() + 16.0f) / 116.0f - (v.Z() * 0.005f)) * kIlluminantD50.Z()};
+        (float)invf((v.X() + 16.0f) / 116.0f + (v.Y() * 0.002f)) * kIlluminantD50.X(),
+        (float)invf((v.X() + 16.0f) / 116.0f) * kIlluminantD50.Y(),
+        (float)invf((v.X() + 16.0f) / 116.0f - (v.Z() * 0.005f)) * kIlluminantD50.Z()};
   }
 
  private:
