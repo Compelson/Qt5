@@ -74,6 +74,8 @@ msvc {
         MSVS_VERSION = 2017
     } else: equals(MSVC_VER, 16.0) {
         MSVS_VERSION = 2019
+    } else: equals(MSVC_VER, 17.0) {
+        MSVS_VERSION = 2022
     } else {
         error("Visual Studio compiler version \"$$MSVC_VER\" is not supported by gn.")
     }
