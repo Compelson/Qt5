@@ -42,8 +42,6 @@
 
 #include <QtXmlPatterns/QXmlName>
 #include <QtXmlPatterns/QXmlNodeModelIndex>
-#include "qabstractxmlforwarditerator_p.h"
-
 #include <QtCore/QSharedData>
 #include <QtCore/QScopedPointer>
 
@@ -109,7 +107,7 @@ public:
 
     /* The members below are internal, not part of the public API, and
      * unsupported. Using them leads to undefined behavior. */
-    virtual QXmlNodeModelIndex::Iterator::Ptr iterate(const QXmlNodeModelIndex &ni, QXmlNodeModelIndex::Axis axis) const;
+    virtual QExplicitlySharedDataPointer<QAbstractXmlForwardIterator<QXmlNodeModelIndex> > iterate(const QXmlNodeModelIndex &ni, QXmlNodeModelIndex::Axis axis) const;
     virtual QPatternist::ItemIteratorPtr sequencedTypedValue(const QXmlNodeModelIndex &ni) const;
     virtual QPatternist::ItemTypePtr type(const QXmlNodeModelIndex &ni) const;
     virtual QXmlName::NamespaceCode namespaceForPrefix(const QXmlNodeModelIndex &ni,
