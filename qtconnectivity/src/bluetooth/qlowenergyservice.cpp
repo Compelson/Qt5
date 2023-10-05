@@ -96,7 +96,7 @@ QT_BEGIN_NAMESPACE
 
     The discovery of its included services, characteristics and descriptors
     is triggered when calling \l discoverDetails(). During the discovery the
-    \l state() transitions from \l DiscoveryRequired via \l DiscoveringServices
+    \l state() transitions from \l DiscoveryRequired via \l DiscoveringService
     to its final \l ServiceDiscovered state. This transition is advertised via
     the \l stateChanged() signal. Once the details are known, all of the contained
     characteristics, descriptors and included services are known and can be read
@@ -144,7 +144,7 @@ QT_BEGIN_NAMESPACE
     the central is interested in receiving. In order for a characteristic to support
     such notifications it must have the \l QLowEnergyCharacteristic::Notify or
     \l QLowEnergyCharacteristic::Indicate property and a descriptor of type
-    \l QBluetoothUuid::ClientCharacteristicConfiguration. Provided those conditions
+    \l QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration. Provided those conditions
     are fulfilled notifications can be enabled as shown in the following code segment:
 
     \snippet doc_src_qtbluetooth.cpp enable_btle_notifications
@@ -199,20 +199,19 @@ QT_BEGIN_NAMESPACE
                                     the service while it was not yet in the
                                     \l ServiceDiscovered \l state() or the service is invalid
                                     due to a loss of connection to the peripheral device.
-    \value CharacteristicReadError  An attempt to read a characteristic value failed. For example,
-                                    it might be triggered in response to a call to
-                                    \l readCharacteristic(). This value was introduced by Qt 5.5.
+    \value [since 5.5] CharacteristicReadError  An attempt to read a characteristic value failed.
+                                                For example, it might be triggered in response
+                                                to a call to \l readCharacteristic().
     \value CharacteristicWriteError An attempt to write a new value to a characteristic
                                     failed. For example, it might be triggered when attempting
                                     to write to a read-only characteristic.
-    \value DescriptorReadError      An attempt to read a descriptor value failed. For example,
-                                    it might be triggered in response to a call to
-                                    \l readDescriptor(). This value was introduced by Qt 5.5.
+    \value [since 5.5] DescriptorReadError      An attempt to read a descriptor value failed.
+                                                For example, it might be triggered in response
+                                                to a call to \l readDescriptor().
     \value DescriptorWriteError     An attempt to write a new value to a descriptor
                                     failed. For example, it might be triggered when attempting
                                     to write to a read-only descriptor.
-    \value UnknownError             An unknown error occurred when interacting with the service.
-                                    This value was introduced by Qt 5.5.
+    \value [since 5.5] UnknownError An unknown error occurred when interacting with the service.
  */
 
 /*!
@@ -220,21 +219,43 @@ QT_BEGIN_NAMESPACE
 
     This enum describes the \l state() of the service object.
 
-    \value InvalidService       A service can become invalid when it looses
-                                the connection to the underlying device. Even though
-                                the connection may be lost it retains its last information.
-                                An invalid service cannot become valid anymore even if
-                                the connection to the device is re-established.
-    \value DiscoveryRequired    The service details are yet to be discovered by calling \l discoverDetails().
-                                The only reliable pieces of information are its
-                                \l serviceUuid() and \l serviceName().
-    \value DiscoveringServices  The service details are being discovered.
-    \value ServiceDiscovered    The service details have been discovered.
-    \value LocalService         The service is associated with a controller object in the
-                                \l{QLowEnergyController::PeripheralRole}{peripheral role}. Such
-                                service objects do not change their state.
-                                This value was introduced by Qt 5.7.
+    \value InvalidService             A service can become invalid when it looses
+                                      the connection to the underlying device. Even though
+                                      the connection may be lost it retains its last information.
+                                      An invalid service cannot become valid anymore even if
+                                      the connection to the device is re-established.
+    \value RemoteService              The service details are yet to be discovered
+                                      by calling \l discoverDetails().
+                                      The only reliable pieces of information are its
+                                      \l serviceUuid() and \l serviceName().
+    \value RemoteServiceDiscovering   The service details are being discovered.
+    \value RemoteServiceDiscovered    The service details have been discovered.
+    \value [since 5.7] LocalService   The service is associated with a controller object in the
+                                      \l{QLowEnergyController::PeripheralRole}{peripheral role}.
+                                      Such service objects do not change their state.
+    \value DiscoveryRequired          Deprecated. Was renamed to RemoteService.
+    \value DiscoveringService         Deprecated. Was renamed to RemoteServiceDiscovering.
+    \value ServiceDiscovered          Deprecated. Was renamed to RemoteServiceDiscovered.
  */
+
+/*!
+    \enum QLowEnergyService::DiscoveryMode
+
+    This enum lists service discovery modes.
+    All modes discover the characteristics of the service and the descriptors
+    of the characteristics. The modes differ in whether characteristic values
+    and descriptors are read.
+
+    \value FullDiscovery        During a full discovery, all characteristics
+                                are discovered. All characteristic values and
+                                descriptors are read.
+    \value SkipValueDiscovery   During a minimal discovery, all characteristics
+                                are discovered. Characteristic values and
+                                descriptors are not read.
+
+    \sa discoverDetails()
+    \since 6.2
+*/
 
 /*!
   \enum QLowEnergyService::WriteMode
@@ -261,17 +282,16 @@ QT_BEGIN_NAMESPACE
                                 write operation as it may happen in between other
                                 device interactions.
 
-  \value WriteSigned            If a characteristic is written using this mode, the remote peripheral
-                                shall not send a write confirmation. The operation's success
-                                cannot be determined and the payload must not be longer than 8 bytes.
-                                A bond must exist between the two devices and the link must not be
-                                encrypted.
-                                A characteristic must have set the
-                                \l QLowEnergyCharacteristic::WriteSigned property to support this
-                                write mode.
-                                This value was introduced in Qt 5.7 and is currently only
-                                supported on Android and on Linux with BlueZ 5 and a kernel version
-                                3.7 or newer.
+  \value [since 5.7] WriteSigned    If a characteristic is written using this mode, the remote
+                                    peripheral shall not send a write confirmation. The operation's
+                                    success cannot be determined and the payload must not be longer
+                                    than 8 bytes. A bond must exist between the two devices and the
+                                    link must not be encrypted.
+                                    A characteristic must have set the
+                                    \l QLowEnergyCharacteristic::WriteSigned property to support
+                                    this write mode.
+                                    This value is currently only supported on Android and on Linux
+                                    with BlueZ 5 and a kernel version 3.7 or newer.
  */
 
 /*!
@@ -324,13 +344,14 @@ QT_BEGIN_NAMESPACE
  */
 
 /*!
-    \fn void QLowEnergyService::characteristicChanged(const QLowEnergyCharacteristic &characteristic, const QByteArray &newValue)
+    \fn void QLowEnergyService::characteristicChanged(const QLowEnergyCharacteristic
+   &characteristic, const QByteArray &newValue)
 
     If the associated controller object is in the \l {QLowEnergyController::CentralRole}{central}
     role, this signal is emitted when the value of \a characteristic is changed by an event on the
     peripheral/device side. In that case, the signal emission implies that change notifications must
     have been activated via the characteristic's
-    \l {QBluetoothUuid::ClientCharacteristicConfiguration}{ClientCharacteristicConfiguration}
+    \l {QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration}{ClientCharacteristicConfiguration}
     descriptor prior to the change event on the peripheral. More details on how this might be
     done can be found further \l{notifications}{above}.
 
@@ -555,13 +576,34 @@ QString QLowEnergyService::serviceName() const
 
 
 /*!
-    Initiates the discovery of the services, characteristics
-    and descriptors contained by the service. The discovery process is indicated
-    via the \l stateChanged() signal.
+    Initiates discovery of the service's included services, characteristics,
+    and their associated descriptors.
+
+    The discovery process is indicated via the \l stateChanged() signal.
+    After creation, the service is in \l DiscoveryRequired state.
+    When calling discoverDetails() it transitions to \l DiscoveringService.
+    After completion of detail discovery, it transitions to
+    \l ServiceDiscovered state. On each transition, the \l stateChanged()
+    signal is emitted.
+    Depending on the argument \a mode, a \l FullDiscovery or a
+    \l SkipValueDiscovery is performed. In
+    any case, all services and characteristics are discovered. A
+    \l FullDiscovery proceeds and reads all characteristic values and
+    descriptors. A \l SkipValueDiscovery does not read characteristic values
+    and descriptors. A \l SkipValueDiscovery has two advantages. First, it is
+    faster. Second, it circumvents bugs in some devices which wrongly advertise
+    characteristics or descriptors as readable but nevertheless do not permit
+    reads on them. This can trigger unpredictable behavior.
+    After a \l SkipValueDiscovery, it is necessary to call
+    \l readCharacteristic() / \l readDescriptor() and wait for them to
+    finish successfully before accessing the value of a characteristic or
+    descriptor.
+
+    The argument \a mode was introduced in Qt 6.2.
 
     \sa state()
  */
-void QLowEnergyService::discoverDetails()
+void QLowEnergyService::discoverDetails(DiscoveryMode mode)
 {
     Q_D(QLowEnergyService);
 
@@ -570,12 +612,12 @@ void QLowEnergyService::discoverDetails()
         return;
     }
 
-    if (d->state != QLowEnergyService::DiscoveryRequired)
+    if (d->state != QLowEnergyService::RemoteService)
         return;
 
-    d->setState(QLowEnergyService::DiscoveringServices);
+    d->setState(QLowEnergyService::RemoteServiceDiscovering);
 
-    d->controller->discoverServiceDetails(d->uuid);
+    d->controller->discoverServiceDetails(d->uuid, mode);
 }
 
 /*!
@@ -634,7 +676,7 @@ void QLowEnergyService::readCharacteristic(
 {
     Q_D(QLowEnergyService);
 
-    if (d->controller == nullptr || state() != ServiceDiscovered || !contains(characteristic)) {
+    if (d->controller == nullptr || state() != RemoteServiceDiscovered || !contains(characteristic)) {
         d->setError(QLowEnergyService::OperationError);
         return;
     }
@@ -707,7 +749,7 @@ void QLowEnergyService::writeCharacteristic(
 
     if (d->controller == nullptr
             || (d->controller->role == QLowEnergyController::CentralRole
-                && state() != ServiceDiscovered)
+                && state() != RemoteServiceDiscovered)
             || !contains(characteristic)) {
         d->setError(QLowEnergyService::OperationError);
         return;
@@ -764,7 +806,7 @@ void QLowEnergyService::readDescriptor(
 {
     Q_D(QLowEnergyService);
 
-    if (d->controller == nullptr || state() != ServiceDiscovered || !contains(descriptor)) {
+    if (d->controller == nullptr || state() != RemoteServiceDiscovered || !contains(descriptor)) {
         d->setError(QLowEnergyService::OperationError);
         return;
     }
@@ -808,13 +850,13 @@ void QLowEnergyService::writeDescriptor(const QLowEnergyDescriptor &descriptor,
 
     if (d->controller == nullptr
             || (d->controller->role == QLowEnergyController::CentralRole
-            && state() != ServiceDiscovered)
+            && state() != RemoteServiceDiscovered)
         || !contains(descriptor)) {
         d->setError(QLowEnergyService::OperationError);
         return;
     }
 #ifdef Q_OS_DARWIN
-    if (descriptor.uuid() == QBluetoothUuid::ClientCharacteristicConfiguration) {
+    if (descriptor.uuid() == QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration) {
         // We have to identify a special case - ClientCharacteristicConfiguration
         // since with CoreBluetooth:
         //

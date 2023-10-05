@@ -122,9 +122,10 @@ public:
 
     QBluetoothUuid uuid;
     QList<QBluetoothUuid> includedServices;
-    QLowEnergyService::ServiceTypes type;
-    QLowEnergyService::ServiceState state;
-    QLowEnergyService::ServiceError lastError;
+    QLowEnergyService::ServiceTypes type = QLowEnergyService::PrimaryService;
+    QLowEnergyService::ServiceState state = QLowEnergyService::InvalidService;
+    QLowEnergyService::ServiceError lastError = QLowEnergyService::NoError;
+    QLowEnergyService::DiscoveryMode mode = QLowEnergyService::FullDiscovery;
 
     QHash<QLowEnergyHandle, CharData> characteristicList;
 
