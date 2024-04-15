@@ -586,7 +586,7 @@ QWindowsShellItem::QWindowsShellItem(IShellItem *item)
     : m_item(item)
     , m_attributes(0)
 {
-    if (FAILED(item->GetAttributes(SFGAO_CAPABILITYMASK | SFGAO_DISPLAYATTRMASK | SFGAO_CONTENTSMASK | SFGAO_STORAGECAPMASK, &m_attributes)))
+    if (FAILED(item->GetAttributes(SFGAO_CAPABILITYMASK | /*SFGAO_DISPLAYATTRMASK | SFGAO_CONTENTSMASK |*/ SFGAO_STORAGECAPMASK, &m_attributes)))
         m_attributes = 0;
 }
 
