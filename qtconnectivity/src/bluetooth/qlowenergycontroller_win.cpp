@@ -826,7 +826,8 @@ void QLowEnergyControllerPrivateWin32::discoverServices()
 }
 
 void QLowEnergyControllerPrivateWin32::discoverServiceDetails(
-        const QBluetoothUuid &service)
+        const QBluetoothUuid &service,
+        QLowEnergyService::DiscoveryMode mode)
 {
     if (!serviceList.contains(service)) {
         qCWarning(QT_BT_WINDOWS) << "Discovery of unknown service" << service.toString()
@@ -903,69 +904,72 @@ void QLowEnergyControllerPrivateWin32::discoverServiceDetails(
             properties |= QLowEnergyCharacteristic::WriteNoResponse;
 
         detailsData.properties = properties;
-        detailsData.value = getGattCharacteristicValue(
-                    servicePrivate->hService, const_cast<PBTH_LE_GATT_CHARACTERISTIC>(
-                        &gattCharacteristic), &systemErrorCode);
-
-        if (systemErrorCode != NO_ERROR) {
-            // We do not interrupt enumerating of characteristics
-            // if value can not be read
-            qCWarning(QT_BT_WINDOWS) << "Unable to get value for characteristic"
-                                     << detailsData.uuid.toString()
-                                     << "of the service" << service.toString()
-                                     << ":" << qt_error_string(systemErrorCode);
-        }
-
-        // We assume that the characteristic has no any descriptors. So, the
-        // biggest characteristic + 1 will indicate an end handle of service.
-        servicePrivate->endHandle = std::max(
-                    servicePrivate->endHandle,
-                    QLowEnergyHandle(gattCharacteristic.AttributeHandle + 1));
-
-        const QVector<BTH_LE_GATT_DESCRIPTOR> foundDescriptors = enumerateGattDescriptors(
-                    servicePrivate->hService, const_cast<PBTH_LE_GATT_CHARACTERISTIC>(
-                        &gattCharacteristic), &systemErrorCode);
-
-        if (systemErrorCode != NO_ERROR) {
-            if (systemErrorCode != ERROR_NOT_FOUND) {
-                qCWarning(QT_BT_WINDOWS) << "Unable to get descriptor for characteristic"
-                                         << detailsData.uuid.toString()
-                                         << "of the service" << service.toString()
-                                         << ":" << qt_error_string(systemErrorCode);
-                servicePrivate->setError(QLowEnergyService::DescriptorReadError);
-                servicePrivate->setState(QLowEnergyService::DiscoveryRequired);
-                return;
-            }
-        }
-
-        for (const BTH_LE_GATT_DESCRIPTOR &gattDescriptor : foundDescriptors) {
-            const QLowEnergyHandle descriptorHandle = gattDescriptor.AttributeHandle;
-
-            QLowEnergyServicePrivate::DescData data;
-            data.uuid = qtBluetoothUuidFromNativeLeUuid(
-                        gattDescriptor.DescriptorUuid);
-
-            data.value = getGattDescriptorValue(servicePrivate->hService, const_cast<PBTH_LE_GATT_DESCRIPTOR>(
-                                                    &gattDescriptor), &systemErrorCode);
+        if (mode == QLowEnergyService::DiscoveryMode::FullDiscovery)
+        {
+            detailsData.value = getGattCharacteristicValue(
+                        servicePrivate->hService, const_cast<PBTH_LE_GATT_CHARACTERISTIC>(
+                            &gattCharacteristic), &systemErrorCode);
 
             if (systemErrorCode != NO_ERROR) {
-                qCWarning(QT_BT_WINDOWS) << "Unable to get value for descriptor"
-                                         << data.uuid.toString()
-                                         << "for characteristic"
-                                         << detailsData.uuid.toString()
-                                         << "of the service" << service.toString()
-                                         << ":" << qt_error_string(systemErrorCode);
-                servicePrivate->setError(QLowEnergyService::DescriptorReadError);
-                servicePrivate->setState(QLowEnergyService::DiscoveryRequired);
-                return;
+                // We do not interrupt enumerating of characteristics
+                // if value can not be read
+                qCWarning(QT_BT_WINDOWS) << "Unable to get value for characteristic"
+                                        << detailsData.uuid.toString()
+                                        << "of the service" << service.toString()
+                                        << ":" << qt_error_string(systemErrorCode);
             }
 
-            // Biggest descriptor will contain an end handle of service.
+            // We assume that the characteristic has no any descriptors. So, the
+            // biggest characteristic + 1 will indicate an end handle of service.
             servicePrivate->endHandle = std::max(
                         servicePrivate->endHandle,
-                        QLowEnergyHandle(gattDescriptor.AttributeHandle));
+                        QLowEnergyHandle(gattCharacteristic.AttributeHandle + 1));
 
-            detailsData.descriptorList.insert(descriptorHandle, data);
+            const QVector<BTH_LE_GATT_DESCRIPTOR> foundDescriptors = enumerateGattDescriptors(
+                        servicePrivate->hService, const_cast<PBTH_LE_GATT_CHARACTERISTIC>(
+                            &gattCharacteristic), &systemErrorCode);
+
+            if (systemErrorCode != NO_ERROR) {
+                if (systemErrorCode != ERROR_NOT_FOUND) {
+                    qCWarning(QT_BT_WINDOWS) << "Unable to get descriptor for characteristic"
+                                            << detailsData.uuid.toString()
+                                            << "of the service" << service.toString()
+                                            << ":" << qt_error_string(systemErrorCode);
+                    servicePrivate->setError(QLowEnergyService::DescriptorReadError);
+                    servicePrivate->setState(QLowEnergyService::DiscoveryRequired);
+                    return;
+                }
+            }
+
+            for (const BTH_LE_GATT_DESCRIPTOR &gattDescriptor : foundDescriptors) {
+                const QLowEnergyHandle descriptorHandle = gattDescriptor.AttributeHandle;
+
+                QLowEnergyServicePrivate::DescData data;
+                data.uuid = qtBluetoothUuidFromNativeLeUuid(
+                            gattDescriptor.DescriptorUuid);
+
+                data.value = getGattDescriptorValue(servicePrivate->hService, const_cast<PBTH_LE_GATT_DESCRIPTOR>(
+                                                        &gattDescriptor), &systemErrorCode);
+
+                if (systemErrorCode != NO_ERROR) {
+                    qCWarning(QT_BT_WINDOWS) << "Unable to get value for descriptor"
+                                            << data.uuid.toString()
+                                            << "for characteristic"
+                                            << detailsData.uuid.toString()
+                                            << "of the service" << service.toString()
+                                            << ":" << qt_error_string(systemErrorCode);
+                    servicePrivate->setError(QLowEnergyService::DescriptorReadError);
+                    servicePrivate->setState(QLowEnergyService::DiscoveryRequired);
+                    return;
+                }
+
+                // Biggest descriptor will contain an end handle of service.
+                servicePrivate->endHandle = std::max(
+                            servicePrivate->endHandle,
+                            QLowEnergyHandle(gattDescriptor.AttributeHandle));
+
+                detailsData.descriptorList.insert(descriptorHandle, data);
+            }
         }
 
         servicePrivate->characteristicList.insert(characteristicHandle, detailsData);

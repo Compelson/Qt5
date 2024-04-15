@@ -71,13 +71,26 @@ public:
 
     enum ServiceState {
         InvalidService = 0,
-        DiscoveryRequired,  // we know start/end handle but nothing more
-        //TODO Rename DiscoveringServices -> DiscoveringDetails or DiscoveringService
-        DiscoveringServices,// discoverDetails() called and running
-        ServiceDiscovered,  // all details have been synchronized
+        RemoteService,
+        RemoteServiceDiscovering, // discoverDetails() called and running
+        RemoteServiceDiscovered,  // all details have been synchronized
         LocalService,
+
+// for source compatibility:
+        DiscoveryRequired
+                = RemoteService,
+        DiscoveringServices
+                = RemoteServiceDiscovering,
+        ServiceDiscovered
+                = RemoteServiceDiscovered,
     };
     Q_ENUM(ServiceState)
+
+    enum DiscoveryMode {
+        FullDiscovery,      // standard, reads all attributes
+        SkipValueDiscovery  // does not read characteristic values and descriptors
+    };
+    Q_ENUM(DiscoveryMode)
 
     enum WriteMode {
         WriteWithResponse = 0,
@@ -98,7 +111,7 @@ public:
     QBluetoothUuid serviceUuid() const;
     QString serviceName() const;
 
-    void discoverDetails();
+    void discoverDetails(DiscoveryMode mode = FullDiscovery);
 
     ServiceError error() const;
 

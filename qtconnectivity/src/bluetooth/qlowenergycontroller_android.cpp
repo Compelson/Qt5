@@ -204,7 +204,8 @@ void QLowEnergyControllerPrivateAndroid::discoverServices()
     }
 }
 
-void QLowEnergyControllerPrivateAndroid::discoverServiceDetails(const QBluetoothUuid &service)
+void QLowEnergyControllerPrivateAndroid::discoverServiceDetails(
+        const QBluetoothUuid &service, QLowEnergyService::DiscoveryMode mode)
 {
     if (!serviceList.contains(service)) {
         qCWarning(QT_BT_ANDROID) << "Discovery of unknown service" << service.toString()
@@ -222,6 +223,7 @@ void QLowEnergyControllerPrivateAndroid::discoverServiceDetails(const QBluetooth
 
     QAndroidJniEnvironment env;
     QAndroidJniObject uuid = QAndroidJniObject::fromString(tempUuid);
+    bool readAllValues = mode == QLowEnergyService::FullDiscovery;
     bool result = hub->javaObject().callMethod<jboolean>("discoverServiceDetails",
                                                          "(Ljava/lang/String;)Z",
                                                          uuid.object<jstring>());
